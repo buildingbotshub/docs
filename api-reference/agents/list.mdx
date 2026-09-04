@@ -1,0 +1,104 @@
+---
+title: "List Agents — Mais Linda API Reference GET /v1/agents"
+sidebarTitle: "List Agents"
+description: "Retrieve a paginated list of all agents in your account. Filter by active or inactive status and control page size with query parameters."
+---
+
+Retrieve a paginated list of all agents belonging to your account. Results are sorted by creation date in descending order. Use the `status` query parameter to filter agents by their current state, and the `page` and `per_page` parameters to navigate through large result sets.
+
+```http
+GET /v1/agents
+```
+
+## Query Parameters
+
+<ParamField query="status" type="string">
+  Filter agents by their current status. Accepted values: `active` or `inactive`. When omitted, agents of both statuses are returned.
+</ParamField>
+
+<ParamField query="page" type="integer">
+  The page number to retrieve. Defaults to `1`.
+</ParamField>
+
+<ParamField query="per_page" type="integer">
+  The number of results to return per page. Defaults to `20`. Maximum value is `100`.
+</ParamField>
+
+## Example Request
+
+```bash
+curl https://api.maislinda.com/v1/agents?status=active&page=1&per_page=20 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+## Example Response
+
+```json
+{
+  "data": [
+    {
+      "id": "agent_01j8x...",
+      "name": "Support Bot",
+      "status": "active",
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-16T08:00:00Z"
+    }
+  ],
+  "meta": {
+    "total": 1,
+    "page": 1,
+    "per_page": 20,
+    "total_pages": 1
+  }
+}
+```
+
+## Response Fields
+
+<ResponseField name="data" type="array">
+  An array of agent objects matching the query. Empty array `[]` when no agents are found.
+
+  <Expandable title="Agent object fields">
+    <ResponseField name="id" type="string">
+      The unique identifier for the agent.
+    </ResponseField>
+
+    <ResponseField name="name" type="string">
+      The display name of the agent.
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      The current status of the agent. Either `active` or `inactive`.
+    </ResponseField>
+
+    <ResponseField name="created_at" type="string">
+      ISO 8601 timestamp of when the agent was created.
+    </ResponseField>
+
+    <ResponseField name="updated_at" type="string">
+      ISO 8601 timestamp of the most recent update to the agent.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="meta" type="object">
+  Pagination metadata for the current response.
+
+  <Expandable title="Meta object fields">
+    <ResponseField name="total" type="integer">
+      The total number of agents matching the query across all pages.
+    </ResponseField>
+
+    <ResponseField name="page" type="integer">
+      The current page number.
+    </ResponseField>
+
+    <ResponseField name="per_page" type="integer">
+      The number of results returned per page.
+    </ResponseField>
+
+    <ResponseField name="total_pages" type="integer">
+      The total number of pages available given the current `per_page` value.
+    </ResponseField>
+  </Expandable>
+</ResponseField>

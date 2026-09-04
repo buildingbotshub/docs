@@ -1,0 +1,94 @@
+---
+title: "Connect Mais Linda to Messaging Channels and Tools"
+sidebarTitle: "Integrations"
+description: "Deploy your Mais Linda agent on WhatsApp, Slack, and other channels, and connect CRMs and helpdesk tools to centralize conversations."
+---
+
+Mais Linda agents can be deployed on multiple channels from a single configuration. Once your agent is working through the API, connect it to messaging platforms and business tools to reach users wherever they are.
+
+## Messaging Channels
+
+<CardGroup cols={2}>
+  <Card title="WhatsApp" icon="whatsapp">
+    Connect via the WhatsApp Business API to handle customer conversations at scale. **Requirements:** a verified WhatsApp Business account and an approved phone number.
+  </Card>
+  <Card title="Slack" icon="slack">
+    Deploy your agent as a Slack app to answer questions in channels or direct messages — great for internal knowledge bases and team support bots.
+  </Card>
+  <Card title="Website Widget" icon="globe">
+    Embed a fully featured chat widget directly in your website with a two-line JavaScript snippet. No server-side code required.
+  </Card>
+  <Card title="Custom Channel" icon="plug">
+    Use the Mais Linda REST API to power any custom interface — mobile apps, kiosks, voice platforms, or any channel not listed here.
+  </Card>
+</CardGroup>
+
+## Connecting WhatsApp
+
+<Steps>
+  <Step title="Open the WhatsApp integration page">
+    In your Mais Linda dashboard, navigate to **Integrations** → **WhatsApp**.
+  </Step>
+  <Step title="Connect your WhatsApp Business account">
+    Click **Connect Account** and follow the prompts to authorize your WhatsApp Business account through Meta's verification flow. You'll need admin access to your Meta Business Manager.
+  </Step>
+  <Step title="Select your agent">
+    Choose the agent you want to handle incoming WhatsApp messages. All messages sent to your connected business number will be routed to this agent.
+  </Step>
+  <Step title="Send a test message">
+    Send a WhatsApp message from a personal number to your business number and confirm that your agent replies correctly. Check the **Conversations** tab in your dashboard to review the exchange.
+  </Step>
+</Steps>
+
+## Connecting Slack
+
+<Steps>
+  <Step title="Open the Slack integration page">
+    In your Mais Linda dashboard, navigate to **Integrations** → **Slack**.
+  </Step>
+  <Step title="Install the Slack app">
+    Click **Add to Slack** and authorize the installation in your Slack workspace. You'll need permission to install apps in your workspace.
+  </Step>
+  <Step title="Select your agent">
+    Choose the agent that will respond to messages. You can configure whether the agent responds to direct messages, mentions in channels, or both.
+  </Step>
+  <Step title="Test in Slack">
+    Send a direct message to the Mais Linda bot in Slack or mention it in a channel with `@MaisLinda` and confirm it responds as expected.
+  </Step>
+</Steps>
+
+## CRM & Helpdesk Integrations
+
+Mais Linda doesn't offer native plugins for every CRM and helpdesk tool, but you can push conversation data to any platform — including **Salesforce**, **HubSpot**, and **Zendesk** — using webhooks.
+
+The general pattern is:
+
+1. **Register a webhook** on your Mais Linda account for the events you care about (e.g., `conversation.started`, `message.received`, `conversation.closed`).
+2. **Receive the payload** at your server endpoint and extract the relevant data (thread ID, user ID, message content, timestamp).
+3. **Push the data** to your CRM or helpdesk via their API — create a contact, open a ticket, or log the conversation.
+
+This approach gives you full control over what gets synced and how it's mapped to your existing data model. For a complete walkthrough of webhook setup and payload verification, see the [Webhooks](/guides/webhooks) guide.
+
+## Building a Custom Integration
+
+Any platform or interface can be connected to a Mais Linda agent using the chat API directly. This is the recommended approach for mobile apps, interactive voice response (IVR) systems, or any channel not covered by the built-in integrations.
+
+The pattern is simple:
+
+1. **Receive a message** from a user in your custom interface.
+2. **Forward it to Mais Linda** by calling `POST /v1/agents/{agentId}/chat` with the message content and, optionally, a `thread_id` to maintain conversation context.
+3. **Return the reply** from the API response back to the user in your interface.
+
+```bash
+curl -X POST https://api.maislinda.com/v1/agents/{agentId}/chat \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Do you offer international shipping?",
+    "thread_id": "thread_abc123"
+  }'
+```
+
+Pass the same `thread_id` across turns to maintain conversation history. Omit it on the first message and use the `thread_id` from the response for all subsequent turns in that session.
+
+Because the chat API accepts any string message, you can pipe input from any source — parsed voice transcripts, form submissions, or messages from a proprietary messaging platform — into a Mais Linda agent and stream the responses back to users in real time.

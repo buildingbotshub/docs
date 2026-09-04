@@ -1,0 +1,36 @@
+---
+title: "Delete an Agent Permanently — DELETE /v1/agents/{agentId}"
+sidebarTitle: "Delete Agent"
+description: "Permanently delete an agent and all associated data including its knowledge base and conversation history. This action cannot be undone."
+---
+
+Permanently delete an agent from your account. Deleting an agent also removes all data associated with it, including its knowledge base documents and full conversation history.
+
+A successful request returns HTTP status `204 No Content` with no response body.
+
+```http
+DELETE /v1/agents/{agentId}
+```
+
+<Warning>
+  Deleting an agent is permanent and cannot be undone. All knowledge base documents and conversation history are deleted. Consider setting `status` to `inactive` instead if you want to preserve data.
+</Warning>
+
+## Path Parameters
+
+<ParamField path="agentId" type="string" required>
+  The unique identifier of the agent to delete.
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X DELETE https://api.maislinda.com/v1/agents/agent_01j8x... \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+## Response
+
+On success, the API returns `204 No Content` with an empty response body. No JSON payload is returned.
+
+If the agent ID does not exist or does not belong to your account, the API returns `404 NOT_FOUND`.

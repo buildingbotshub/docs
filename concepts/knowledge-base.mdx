@@ -1,0 +1,68 @@
+---
+title: "Agent Knowledge Base: Custom Content for AI Responses"
+sidebarTitle: "Knowledge Base"
+description: "A knowledge base holds documents your agent uses to answer questions. Upload FAQs, product docs, and policies to ground AI responses in your own content."
+---
+
+The knowledge base is where you store the information your agent draws on when answering user questions. By adding your product documentation, FAQs, policies, or any other relevant content, you ensure the agent provides accurate, specific answers grounded in your data rather than generic AI responses.
+
+## Supported Content
+
+Your knowledge base can include a variety of document types. Mais Linda supports:
+
+- **Plain text and Markdown documents** — Prose-style content such as help articles, guides, and release notes.
+- **FAQs** — Question-and-answer pairs that map directly to common user queries. These are especially effective for high-precision retrieval.
+- **Product documentation** — Feature descriptions, specifications, how-to guides, and technical references.
+- **Policy documents** — Return policies, terms of service, privacy policies, and other governance content.
+
+<Tip>
+Keep each document focused on a single topic. Well-structured, concise documents produce more accurate agent responses.
+</Tip>
+
+## Adding Content via API
+
+Upload a document to an agent's knowledge base by sending a `POST` request to the `/knowledge` endpoint for that agent. Provide a clear `title` and the full `content` of the document.
+
+```bash
+curl -X POST https://api.maislinda.com/v1/agents/agent_01j8x.../knowledge \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Refund Policy",
+    "content": "Customers may request a refund within 30 days of purchase. To request a refund, contact support@yourcompany.com with your order number."
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "id": "kb_doc_09az...",
+  "agent_id": "agent_01j8x...",
+  "title": "Refund Policy",
+  "created_at": "2024-11-01T10:23:00Z"
+}
+```
+
+The document is immediately available for the agent to reference. You can add as many documents as needed, and remove or update them at any time.
+
+## How the Agent Uses Knowledge
+
+When a user sends a message, Mais Linda searches the agent's knowledge base for content relevant to that query. If matching content is found, the agent incorporates it into its response — this technique is known as **Retrieval-Augmented Generation (RAG)**.
+
+This means:
+
+- The agent **draws directly from your content** rather than relying on general AI knowledge alone.
+- Responses are grounded in what you've uploaded, reducing the risk of the agent fabricating details or giving generic answers.
+- The agent will reference or summarize knowledge base content naturally in its reply, without inventing information that isn't present in your documents.
+
+The result is an agent that sounds knowledgeable about your specific product, policies, and domain — not just AI in general.
+
+## Best Practices
+
+Follow these guidelines to get the most out of your knowledge base:
+
+- **Keep documents under 2,000 words** for best retrieval performance. Long documents can dilute relevance signals — split large content into focused, smaller pieces.
+- **Use clear, descriptive titles** so the retrieval system can accurately match documents to user questions. A title like "Shipping & Delivery FAQ" is more effective than "Doc 3."
+- **Remove outdated documents promptly** to avoid incorrect or contradictory responses. An agent that references a superseded policy can erode user trust.
+- **Test your agent with real user questions** after adding new content. Verify that the agent pulls the right documents and that its responses are accurate before going live.

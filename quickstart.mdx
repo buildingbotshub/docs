@@ -1,0 +1,110 @@
+---
+title: "Mais Linda Quickstart: Your First Agent in Minutes"
+sidebarTitle: "Quickstart"
+description: "Create an AI agent, authenticate with your API key, and send your first message with the Mais Linda Agent API — all in under five minutes."
+---
+
+This guide walks you through creating your first AI agent and sending a message using the Mais Linda API. No prior setup is needed beyond a free dashboard account — you'll go from zero to your first agent response in just a few minutes.
+
+<Steps>
+  <Step title="Sign Up">
+    Head to [https://app.maislinda.com](https://app.maislinda.com) and create a free account. Once you verify your email, you'll land on the main dashboard where you can manage your agents, API keys, and usage.
+  </Step>
+
+  <Step title="Get Your API Key">
+    From the dashboard, navigate to **Settings → API Keys → Generate New Key**. Give your key a descriptive name (e.g. `my-first-key`) and click **Generate**.
+
+    Copy the key immediately and store it somewhere safe — it will only be displayed once.
+
+    <Note>
+      Store your API key securely. Never expose it in client-side code or version control. If you accidentally leak a key, revoke it immediately from your dashboard and generate a replacement.
+    </Note>
+  </Step>
+
+  <Step title="Create Your First Agent">
+    Use the API to create an agent by sending a `POST` request to `/agents`. Replace `YOUR_API_KEY` with the key you just generated.
+
+    ```bash
+    curl -X POST https://api.maislinda.com/v1/agents \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "name": "Support Bot",
+        "instructions": "You are a helpful support agent. Answer customer questions clearly and concisely."
+      }'
+    ```
+
+    A successful response returns the new agent object:
+
+    ```json
+    {
+      "id": "agent_01j8x...",
+      "name": "Support Bot",
+      "status": "active",
+      "created_at": "2024-01-15T10:30:00Z"
+    }
+    ```
+
+    Save the `id` field from the response — you'll need it to send messages to this agent in the next step.
+  </Step>
+
+  <Step title="Send a Message">
+    With your agent created, send your first message by making a `POST` request to `/agents/{agentId}/chat`. Substitute the `agent_01j8x...` placeholder with your actual agent ID.
+
+    ```bash
+    curl -X POST https://api.maislinda.com/v1/agents/agent_01j8x.../chat \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "message": "Hello! What can you help me with?"
+      }'
+    ```
+
+    Your agent will respond with a message and a unique `thread_id`:
+
+    ```json
+    {
+      "response": "Hi there! I'm Support Bot, your dedicated support agent. I can help you with...",
+      "thread_id": "thread_abc123",
+      "agent_id": "agent_01j8x..."
+    }
+    ```
+
+    The `thread_id` ties this exchange to a conversation thread. Include it in future requests to maintain context across multiple turns.
+  </Step>
+
+  <Step title="Continue the Conversation">
+    To continue a conversation and preserve context from earlier messages, include the `thread_id` returned in the previous response. The agent will remember everything said in that thread.
+
+    ```bash
+    curl -X POST https://api.maislinda.com/v1/agents/agent_01j8x.../chat \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "message": "Can you help me reset my password?",
+        "thread_id": "thread_abc123"
+      }'
+    ```
+
+    Omitting `thread_id` starts a brand-new conversation with no memory of previous exchanges. Use a consistent `thread_id` for any session where continuity matters — for example, a support chat with a single user.
+  </Step>
+</Steps>
+
+## Next Steps
+
+You've sent your first message with Mais Linda. Explore the guides and reference docs below to keep building.
+
+<CardGroup cols={2}>
+  <Card title="Configure Your Agent" icon="sliders" href="/guides/create-agent">
+    Customize your agent's instructions, personality, and behavior to fit your use case.
+  </Card>
+  <Card title="Embed a Chat Widget" icon="code" href="/guides/embed-widget">
+    Drop a ready-made chat widget into your website or app with just a few lines of code.
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/overview">
+    Browse the full REST API reference — every endpoint, parameter, and response schema.
+  </Card>
+  <Card title="Set Up Webhooks" icon="webhook" href="/guides/webhooks">
+    Receive real-time event notifications when your agents receive messages or change state.
+  </Card>
+</CardGroup>

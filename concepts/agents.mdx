@@ -1,0 +1,81 @@
+---
+title: "Agents: Configure AI-Powered Conversation Handlers"
+sidebarTitle: "Agents"
+description: "Agents are AI-powered conversation handlers configured with custom instructions and knowledge. Learn how agents work and what you can configure."
+---
+
+An agent in Mais Linda is the core building block — it's an AI-powered entity you configure with instructions, personality, and knowledge. When a user sends a message, the agent processes it and generates a response based on your configuration.
+
+## Agent Components
+
+Each agent is made up of four key components that define its identity and behavior:
+
+- **Name** — The identifier shown to users in some integrations. Choose a name that reflects the agent's purpose (e.g., "Support Bot" or "Sales Assistant").
+- **Instructions** — The system prompt that governs agent behavior, tone, and scope. This is the most important configuration — it tells the agent who it is, what it does, and how it should respond.
+- **Knowledge Base** — Documents and content the agent can reference when answering questions. Adding relevant content here grounds the agent's responses in your specific data.
+- **Status** — Either `active` or `inactive`. Only active agents respond to messages. Inactive agents return an error when contacted.
+
+## Agent Lifecycle
+
+An agent moves through a series of stages from creation to production use:
+
+1. **Create** — Register a new agent via the API, giving it a name and initial configuration.
+2. **Configure** — Write the agent's instructions, tune its behavior, and upload knowledge base content.
+3. **Activate** — Set the agent's status to `active` so it can begin receiving and responding to messages.
+4. **Deploy** — Integrate the agent into your application by calling the `/chat` endpoint with the agent's ID.
+5. **Monitor** — Review conversation logs and refine instructions or knowledge base content based on real-world performance.
+
+## Agent Instructions
+
+Instructions are the system prompt your agent follows in every conversation. Well-written instructions are specific, direct, and give the agent clear boundaries. Avoid vague directives — the more precisely you define the agent's role and constraints, the more consistently it will behave.
+
+**Example instructions:**
+
+```
+You are a customer support agent for Acme Corp. Your job is to:
+- Answer questions about our products and pricing
+- Help users troubleshoot common issues
+- Escalate complex problems by asking users to email support@acmecorp.com
+
+Always be friendly and concise. If you don't know the answer, say so honestly.
+```
+
+Notice that this example defines:
+- The agent's identity and employer
+- Explicit tasks it should handle
+- A clear escalation path for edge cases
+- Tone and honesty guidelines
+
+## Agent Status
+
+An agent must have a status of `active` before it can respond to messages. Attempting to send a message to an inactive agent will return a `422 Unprocessable Entity` error.
+
+You can activate an agent at any time by sending a `PATCH` request to update its status:
+
+```bash
+curl -X PATCH https://api.maislinda.com/v1/agents/{id} \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "active"}'
+```
+
+To deactivate an agent — for example, during maintenance or when retiring it — send the same request with `"status": "inactive"`. Deactivated agents immediately stop responding to new messages.
+
+---
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Conversations" icon="comments" href="/concepts/conversations">
+    Learn how message threads and conversation context work.
+  </Card>
+  <Card title="Knowledge Base" icon="database" href="/concepts/knowledge-base">
+    Upload documents and FAQs to ground your agent's responses.
+  </Card>
+  <Card title="Create an Agent" icon="plus" href="/guides/create-agent">
+    Step-by-step guide to creating and deploying your first agent.
+  </Card>
+  <Card title="Agent API Reference" icon="code" href="/api-reference/agents/create">
+    Full reference for the Agents API endpoints and parameters.
+  </Card>
+</CardGroup>

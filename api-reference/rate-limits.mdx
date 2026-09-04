@@ -1,0 +1,104 @@
+---
+title: "Mais Linda API Rate Limits, Headers, and Usage Quotas"
+sidebarTitle: "Rate Limits"
+description: "Rate limits prevent abuse and ensure fair usage. Learn your plan's limits, how to read rate limit headers, and best practices for staying within limits."
+---
+
+The Mais Linda API enforces rate limits to ensure reliable performance for all users. Limits are applied per API key and reset on a rolling window basis. When you exceed a limit, requests return `429 Too Many Requests` along with a `Retry-After` header telling you exactly how long to wait.
+
+## Default Limits
+
+Rate limits vary by plan. The table below shows the defaults for each tier.
+
+| Plan | Requests per Minute | Messages per Day |
+|---|---|---|
+| **Starter** | 60 | 1,000 |
+| **Pro** | 300 | 10,000 |
+| **Enterprise** | Custom | Custom |
+
+<Note>
+  Message limits apply only to `/chat` endpoint calls. All other API requests (e.g., managing agents, retrieving threads) count only toward the requests-per-minute limit.
+</Note>
+
+If you're on the Enterprise plan or need limits raised for a specific use case, [contact our team](mailto:support@maislinda.com) to discuss custom quotas.
+
+## Rate Limit Headers
+
+Every API response includes the following headers so you can proactively monitor your consumption and avoid hitting limits:
+
+| Header | Description |
+|---|---|
+| `X-RateLimit-Limit` | The total number of requests your key is allowed per minute. |
+| `X-RateLimit-Remaining` | The number of requests remaining in the current window. |
+| `X-RateLimit-Reset` | A Unix timestamp (UTC) indicating when the current window resets and your limit is restored. |
+
+**Example response headers:**
+
+```
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 247
+X-RateLimit-Reset: 1705317060
+```
+
+In this example, the key has used 53 of its 300 allowed requests and the window will reset at Unix timestamp `1705317060`. You can convert that timestamp to a human-readable date with `new Date(1705317060 * 1000).toISOString()`.
+
+## Handling 429 Errors
+
+When you receive a `429 Too Many Requests` response, the API also returns a `Retry-After` header containing the number of **seconds** to wait before retrying.
+
+The recommended approach is **exponential backoff**: wait the `Retry-After` duration, then progressively increase the delay if subsequent requests continue to fail.
+
+```javascript
+async function requestWithBackoff(url, options, maxRetries = 5) {
+  let attempt = 0;
+
+  while (attempt < maxRetries) {
+    const res = await fetch(url, options);
+
+    if (res.status !== 429) {
+      // Not a rate limit error — return the response as-is.
+      return res;
+    }
+
+    // Read the Retry-After header; fall back to an exponential delay.
+    const retryAfter = res.headers.get('Retry-After');
+    const baseDelay = retryAfter ? parseInt(retryAfter, 10) * 1000 : 1000;
+    const delay = baseDelay * Math.pow(2, attempt);
+
+    console.warn(
+      `Rate limited (attempt ${attempt + 1}/${maxRetries}). ` +
+      `Retrying in ${delay / 1000}s...`
+    );
+
+    await new Promise(resolve => setTimeout(resolve, delay));
+    attempt++;
+  }
+
+  throw new Error(`Request failed after ${maxRetries} retries due to rate limiting.`);
+}
+
+// Usage:
+const res = await requestWithBackoff(
+  'https://api.maislinda.com/v1/agents',
+  {
+    headers: {
+      'Authorization': 'Bearer YOUR_API_KEY',
+      'Content-Type': 'application/json'
+    }
+  }
+);
+```
+
+## Best Practices
+
+Follow these guidelines to stay comfortably within your limits and build more resilient integrations:
+
+- **Cache the agent list.** The list of your agents changes rarely. Fetch it once at startup (or on a long TTL) and store it in memory rather than calling `GET /agents` on every request.
+
+- **Batch messages where possible.** If your application needs to send messages to multiple threads in quick succession, process them in controlled batches with a small delay between each batch rather than firing them all simultaneously.
+
+- **Monitor `X-RateLimit-Remaining` proactively.** Watch this header and implement back-pressure in your application before you hit `0` — for example, pause outbound requests when remaining drops below 10% of the limit.
+
+- **Always implement retry logic with backoff.** Transient spikes in traffic can push you over the limit momentarily. A retry strategy with exponential backoff (as shown above) ensures your integration recovers gracefully without manual intervention.
+
+- **Use a single API key per environment.** Avoid sharing a key across staging and production. Separate keys give you clearer visibility into consumption and prevent test traffic from eating into your production quota.

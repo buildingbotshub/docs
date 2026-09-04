@@ -1,0 +1,102 @@
+{
+  "projectType": "api-service",
+  "projectName": "Mais Linda Agent API",
+  "projectDescription": "A RESTful API for building, configuring, and deploying conversational AI agents that can be integrated into websites, apps, and messaging platforms.",
+  "theme": "luma",
+  "primaryColor": "#ef7025",
+  "lightColor": "#eec9bc",
+  "darkColor": "#4fa1ab",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "authentication"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/agents",
+              "concepts/conversations",
+              "concepts/knowledge-base"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/create-agent",
+              "guides/embed-widget",
+              "guides/webhooks",
+              "guides/integrations"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/overview",
+              "api-reference/errors",
+              "api-reference/rate-limits"
+            ]
+          },
+          {
+            "group": "Agents",
+            "pages": [
+              "api-reference/agents/list",
+              "api-reference/agents/create",
+              "api-reference/agents/get",
+              "api-reference/agents/update",
+              "api-reference/agents/delete"
+            ]
+          },
+          {
+            "group": "Conversations",
+            "pages": [
+              "api-reference/conversations/send-message",
+              "api-reference/conversations/get-history",
+              "api-reference/conversations/close"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "api-reference/webhooks/configure",
+              "api-reference/webhooks/events"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Create and configure AI agents with custom knowledge bases",
+    "RESTful API for sending messages and managing conversations",
+    "Embeddable chat widget for websites",
+    "Webhook support for real-time event notifications",
+    "Multi-channel integrations (WhatsApp, Slack, and more)",
+    "Conversation history and thread management",
+    "Bearer token authentication with API keys",
+    "Rate limiting and error handling"
+  ],
+  "publicApiSurface": [
+    "GET /api/v1/agents",
+    "POST /api/v1/agents",
+    "GET /api/v1/agents/{agentId}",
+    "PATCH /api/v1/agents/{agentId}",
+    "DELETE /api/v1/agents/{agentId}",
+    "POST /api/v1/agents/{agentId}/chat",
+    "GET /api/v1/agents/{agentId}/conversations",
+    "POST /api/v1/webhooks",
+    "GET /api/v1/webhooks/events"
+  ]
+}

@@ -1,0 +1,92 @@
+---
+title: "Send Message to an Agent — POST /agents/{agentId}/chat"
+sidebarTitle: "Send Message"
+description: "Send a user message to an agent and receive an AI-generated reply. Pass a thread_id to continue a conversation or omit it to start a new thread."
+---
+
+The send message endpoint is the core of the Mais Linda API. You send a user message to a specific agent and receive the agent's reply. Including a `thread_id` continues an existing conversation with full context; omitting it starts a fresh thread.
+
+## Endpoint
+
+```
+POST /v1/agents/{agentId}/chat
+```
+
+## Path Parameters
+
+| Parameter | Type   | Required | Description                      |
+| --------- | ------ | -------- | -------------------------------- |
+| `agentId` | string | Yes      | The ID of the agent to message   |
+
+## Request Body
+
+| Field       | Type   | Required | Description                                                                              |
+| ----------- | ------ | -------- | ---------------------------------------------------------------------------------------- |
+| `message`   | string | Yes      | The user's message text                                                                  |
+| `thread_id` | string | No       | Thread ID to continue an existing conversation. Omit to start a new thread.             |
+| `user_id`   | string | No       | Your identifier for the user sending the message, for tracking purposes                 |
+
+## Examples
+
+### Start a New Conversation
+
+Omit `thread_id` to begin a fresh thread. Mais Linda will generate a new `thread_id` that you should save and pass in subsequent requests.
+
+```bash
+curl -X POST https://api.maislinda.com/v1/agents/agent_01j8x.../chat \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "What is your return policy?",
+    "user_id": "user_123"
+  }'
+```
+
+```json
+{
+  "response": "Our return policy allows returns within 30 days of purchase for a full refund. Items must be unused and in original packaging.",
+  "thread_id": "thread_abc123",
+  "agent_id": "agent_01j8x...",
+  "message_id": "msg_xyz789",
+  "created_at": "2024-01-15T10:30:00Z"
+}
+```
+
+### Continue an Existing Conversation
+
+Pass the `thread_id` returned from a previous response to continue the conversation with full context.
+
+```bash
+curl -X POST https://api.maislinda.com/v1/agents/agent_01j8x.../chat \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "What about exchanges?",
+    "thread_id": "thread_abc123",
+    "user_id": "user_123"
+  }'
+```
+
+```json
+{
+  "response": "Exchanges are accepted within 30 days. Contact our support team to initiate an exchange for a different size or item.",
+  "thread_id": "thread_abc123",
+  "agent_id": "agent_01j8x...",
+  "message_id": "msg_xyz790",
+  "created_at": "2024-01-15T10:31:00Z"
+}
+```
+
+## Response Fields
+
+| Field        | Type   | Description                               |
+| ------------ | ------ | ----------------------------------------- |
+| `response`   | string | The agent's reply                         |
+| `thread_id`  | string | Thread ID to use in the next message      |
+| `agent_id`   | string | The agent that responded                  |
+| `message_id` | string | Unique ID of this message                 |
+| `created_at` | string | ISO 8601 timestamp                        |
+
+<Note>
+  If the agent's status is `inactive`, the API returns `422 AGENT_INACTIVE`. Ensure your agent is active in the Mais Linda dashboard before sending messages.
+</Note>

@@ -1,0 +1,68 @@
+---
+title: "Mais Linda Agent API: Build AI-Powered Conversational Agents"
+sidebarTitle: "Introduction"
+description: "Mais Linda is a REST API for creating and deploying AI agents that handle conversations across your website, app, and messaging channels."
+---
+
+Mais Linda gives you everything you need to build, configure, and deploy AI-powered conversational agents through a simple REST API. Whether you want to embed a chat widget on your website, connect to WhatsApp, or build a fully custom chat interface, Mais Linda handles the AI and conversation management so you can focus on your product.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Make your first API call and send a message to an agent in minutes.
+  </Card>
+  <Card title="Authentication" icon="key" href="/authentication">
+    Learn how to get your API key and authenticate every request.
+  </Card>
+  <Card title="Create an Agent" icon="robot" href="/guides/create-agent">
+    Step-by-step guide to building and configuring your first AI agent.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Full reference for every endpoint, parameter, and response field.
+  </Card>
+</CardGroup>
+
+## What You Can Build
+
+Mais Linda's Agent API is designed for developers who want to add conversational AI to their products without managing LLM infrastructure.
+
+<CardGroup cols={2}>
+  <Card title="Embedded Chat Widgets" icon="comment-dots" href="/guides/embed-widget">
+    Drop a JavaScript snippet into any webpage to add a fully functional AI chat interface in minutes.
+  </Card>
+  <Card title="Custom Chat UIs" icon="paintbrush" href="/guides/create-agent">
+    Use the REST API to power your own chat interface with full control over the user experience.
+  </Card>
+  <Card title="Multi-Channel Deployment" icon="share-nodes" href="/guides/integrations">
+    Connect your agents to WhatsApp, Slack, and other messaging platforms from one configuration.
+  </Card>
+  <Card title="Automated Workflows" icon="bolt" href="/guides/webhooks">
+    Receive real-time event notifications via webhooks to integrate agents into your existing workflows.
+  </Card>
+</CardGroup>
+
+## How It Works
+
+<Steps>
+  <Step title="Create an Agent">
+    Use the API or dashboard to create an agent. Give it a name, instructions, and a knowledge base with your content.
+  </Step>
+  <Step title="Authenticate">
+    Generate an API key from your dashboard and include it in your request headers.
+  </Step>
+  <Step title="Send Messages">
+    Call the `/chat` endpoint with a user message and receive an AI-generated response with conversation threading built in.
+  </Step>
+  <Step title="Deploy Everywhere">
+    Embed the chat widget on your site, connect messaging channels, or build your own UI on top of the API.
+  </Step>
+</Steps>
+
+## Base URL
+
+All API requests are made to:
+
+```
+https://api.maislinda.com/v1
+```
+
+Every request must include your API key in the `Authorization` header. See [Authentication](/authentication) for details.

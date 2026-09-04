@@ -1,0 +1,119 @@
+---
+title: "Mais Linda REST API — Conventions and Reference Overview"
+sidebarTitle: "Overview"
+description: "Learn the base URL, authentication, request and response format, versioning, HTTP status codes, and pagination conventions for the Mais Linda API."
+---
+
+The Mais Linda API is a RESTful HTTP API. All requests use HTTPS, all request and response bodies are JSON, and every call requires authentication via a Bearer token. This page covers the conventions that apply to every endpoint.
+
+## Base URL
+
+All API requests are made to the following base URL:
+
+```
+https://api.maislinda.com/v1
+```
+
+All endpoints described in this reference are relative to this base URL.
+
+## Request Format
+
+Every request to the Mais Linda API must follow these conventions:
+
+- **Set `Content-Type: application/json`** on all `POST` and `PATCH` requests.
+- **Set `Authorization: Bearer YOUR_API_KEY`** on every request. You can find your API key in your account dashboard.
+- **Request bodies must be valid JSON.** Malformed JSON will result in a `400 Bad Request` response.
+
+**Canonical example request:**
+
+```bash
+curl -X POST https://api.maislinda.com/v1/agents \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "My Agent" }'
+```
+
+## Response Format
+
+All responses — successful or otherwise — return JSON. The structure differs depending on the outcome:
+
+**Successful response** — the resource object is returned directly at the top level:
+
+```json
+{
+  "id": "agent_01j8x...",
+  "name": "My Agent",
+  "status": "active",
+  "created_at": "2024-01-15T10:30:00Z"
+}
+```
+
+**Error response** — an `error` object is returned containing a machine-readable `code` and a human-readable `message`:
+
+```json
+{
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Agent not found."
+  }
+}
+```
+
+See the [Errors](/api-reference/errors) page for a full list of error codes and how to handle them.
+
+## Versioning
+
+The API is versioned via the URL path (e.g., `/v1/`). This ensures that breaking changes never affect your existing integrations.
+
+- **Breaking changes** (removed fields, changed behavior, new required parameters) will always be introduced in a new version, such as `/v2/`. You will receive advance notice before an older version is deprecated.
+- **Non-breaking additions** (new optional fields, new endpoints, new optional query parameters) may be added to the current version at any time without a version bump.
+
+We recommend pinning your integration to an explicit version in all requests.
+
+## HTTP Status Codes
+
+Mais Linda uses standard HTTP status codes to indicate the outcome of every request.
+
+| Status Code | Meaning |
+|---|---|
+| `200 OK` | Successful `GET`, `PATCH`, or `DELETE` request. |
+| `201 Created` | Successful `POST` request that created a new resource. |
+| `400 Bad Request` | The request body or parameters are invalid or malformed. |
+| `401 Unauthorized` | The API key is missing or invalid. |
+| `403 Forbidden` | The API key is valid, but it doesn't have permission to access this resource. |
+| `404 Not Found` | The requested resource does not exist. |
+| `422 Unprocessable Entity` | The request is valid JSON, but contains a semantic error (e.g., the target agent is inactive). |
+| `429 Too Many Requests` | You have exceeded the rate limit. Wait before retrying. |
+| `500 Internal Server Error` | An unexpected error occurred on our servers. |
+
+## Pagination
+
+Endpoints that return collections of resources are paginated. Use the following query parameters to control pagination:
+
+| Parameter | Default | Max | Description |
+|---|---|---|---|
+| `page` | `1` | — | The page number to retrieve. |
+| `per_page` | `20` | `100` | The number of results to return per page. |
+
+**Example:** `GET /v1/agents?page=2&per_page=50`
+
+Every paginated response includes a `meta` object alongside the `data` array:
+
+```json
+{
+  "data": [...],
+  "meta": {
+    "total": 45,
+    "page": 1,
+    "per_page": 20,
+    "total_pages": 3
+  }
+}
+```
+
+| Field | Description |
+|---|---|
+| `total` | Total number of records across all pages. |
+| `page` | The current page number. |
+| `per_page` | The number of records returned on this page. |
+| `total_pages` | The total number of pages available. |

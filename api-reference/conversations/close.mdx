@@ -1,0 +1,53 @@
+---
+title: "Close a Conversation — POST /conversations/{threadId}"
+sidebarTitle: "Close Conversation"
+description: "Mark a conversation thread as closed so it can no longer receive new messages. Triggers a conversation.closed webhook event for your integrations."
+---
+
+Closing a conversation marks the thread as completed and prevents it from receiving new messages. Use this endpoint when a user's session is complete, to trigger a `conversation.closed` webhook event, or to manage resource usage.
+
+## Endpoint
+
+```
+POST /v1/agents/{agentId}/conversations/{threadId}/close
+```
+
+## Path Parameters
+
+| Parameter  | Type   | Required | Description                           |
+| ---------- | ------ | -------- | ------------------------------------- |
+| `agentId`  | string | Yes      | The ID of the agent                   |
+| `threadId` | string | Yes      | The ID of the thread to close         |
+
+No request body is required.
+
+## Example
+
+```bash
+curl -X POST https://api.maislinda.com/v1/agents/agent_01j8x.../conversations/thread_abc123/close \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```json
+{
+  "thread_id": "thread_abc123",
+  "status": "closed",
+  "closed_at": "2024-01-15T11:00:00Z"
+}
+```
+
+## Response Fields
+
+| Field       | Type   | Description                                         |
+| ----------- | ------ | --------------------------------------------------- |
+| `thread_id` | string | The ID of the closed thread                         |
+| `status`    | string | Will be `closed` upon successful close              |
+| `closed_at` | string | ISO 8601 timestamp of when the thread was closed    |
+
+<Warning>
+  Calling this endpoint on an already-closed thread returns a `422` error. Check the thread `status` via [Get History](/api-reference/conversations/get-history) before closing if you are unsure of its current state.
+</Warning>
+
+<Note>
+  Threads expire automatically after **24 hours of inactivity**, even without an explicit close call. Expired threads are assigned `closed_reason: "expired"` and fire a `conversation.closed` webhook event. See the [Webhook Events Reference](/api-reference/webhooks/events) for details.
+</Note>

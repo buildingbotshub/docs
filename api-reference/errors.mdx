@@ -1,0 +1,109 @@
+---
+title: "Mais Linda API Error Codes and Troubleshooting Guide"
+sidebarTitle: "Errors"
+description: "Reference for all Mais Linda API error codes. Includes the error format, a full list of codes, and how to resolve the most common errors."
+---
+
+When an API call fails, Mais Linda returns a structured error object so you can identify exactly what went wrong and how to fix it. Every error response follows the same JSON format regardless of the HTTP status code.
+
+## Error Object Format
+
+All error responses have the following shape:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "The 'name' field is required.",
+    "details": [
+      { "field": "name", "message": "This field is required." }
+    ]
+  }
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `code` | `string` | A machine-readable error code. Use this to programmatically handle specific error cases. |
+| `message` | `string` | A human-readable description of what went wrong. Useful for logging and debugging. |
+| `details` | `array` | An optional array of per-field validation errors. Only present when `code` is `VALIDATION_ERROR`. Each item includes a `field` name and a `message` describing the issue. |
+
+## Error Codes
+
+The table below lists every error code you may encounter across the Mais Linda API, the HTTP status it is paired with, and recommended remediation steps.
+
+| Code | HTTP Status | Description & Resolution |
+|---|---|---|
+| `UNAUTHORIZED` | `401` | Missing or invalid API key. Verify that your `Authorization` header is formatted as `Bearer YOUR_API_KEY` and that the key is active. |
+| `FORBIDDEN` | `403` | Your API key doesn't have permission to perform this action. Check the key's assigned scopes in your account dashboard. |
+| `NOT_FOUND` | `404` | The requested resource (agent, conversation, etc.) was not found. Double-check the ID in your request URL. |
+| `VALIDATION_ERROR` | `400` | The request body failed validation. Inspect the `details` array for a field-by-field breakdown of what needs to be corrected. |
+| `AGENT_INACTIVE` | `422` | The target agent is set to inactive and cannot receive messages. Activate the agent first via `PATCH /agents/{id}`. |
+| `THREAD_CLOSED` | `422` | The conversation thread is closed and cannot accept new messages. Start a new thread to continue the conversation. |
+| `THREAD_NOT_FOUND` | `404` | The `thread_id` you provided doesn't exist or has expired. Verify the ID or create a new thread. |
+| `RATE_LIMIT_EXCEEDED` | `429` | You've exceeded your plan's rate limit. Check the `Retry-After` header and wait before retrying. See [Rate Limits](/api-reference/rate-limits). |
+| `INTERNAL_ERROR` | `500` | An unexpected server-side error occurred. If this error persists, please [contact support](mailto:support@maislinda.com) with your request ID. |
+
+## Handling Errors in Code
+
+We recommend checking the HTTP status code first, then branching on the `error.code` for fine-grained error handling. Here's a complete example in JavaScript:
+
+```javascript
+const res = await fetch('https://api.maislinda.com/v1/agents', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ name: '' })
+});
+
+if (!res.ok) {
+  const { error } = await res.json();
+  console.error(`[${error.code}] ${error.message}`);
+
+  // Handle specific error codes:
+  if (error.code === 'VALIDATION_ERROR') {
+    error.details?.forEach(d => console.error(`  ${d.field}: ${d.message}`));
+  } else if (error.code === 'UNAUTHORIZED') {
+    console.error('Check your API key and Authorization header format.');
+  } else if (error.code === 'RATE_LIMIT_EXCEEDED') {
+    const retryAfter = res.headers.get('Retry-After');
+    console.error(`Rate limited. Retry after ${retryAfter} seconds.`);
+  }
+}
+```
+
+## Common Errors
+
+<AccordionGroup>
+  <Accordion title="401 Unauthorized — what to check">
+    A `401` response means the API could not authenticate your request. Work through the following checklist:
+
+    - **Header format**: Ensure the header is `Authorization: Bearer YOUR_API_KEY` — the word `Bearer` followed by a single space and your key. Do not use `Token` or `Basic`.
+    - **Incomplete key**: API keys are long strings. Confirm the key was copied in full without any trailing whitespace or missing characters.
+    - **Revoked key**: Navigate to your account dashboard and verify the key is still active. Keys can be revoked manually or automatically if a security event is detected.
+    - **Wrong environment**: Make sure you're using a key that matches the environment (e.g., don't use a test key against the production base URL).
+  </Accordion>
+
+  <Accordion title="404 Not Found — agent not found">
+    A `NOT_FOUND` error on an agent request usually has one of these causes:
+
+    - **Wrong account**: The agent ID belongs to a different account. API keys are scoped to a single account, so cross-account lookups will always 404.
+    - **Agent was deleted**: If the agent was deleted (via the dashboard or API), all subsequent requests to that ID will return 404. Check your account's agent list to confirm.
+    - **Typo in the ID**: Agent IDs are case-sensitive. Double-check the full ID, including the `agent_` prefix.
+  </Accordion>
+
+  <Accordion title="422 Agent Inactive — how to activate">
+    When an agent's `status` is `inactive`, it cannot receive messages and will return `AGENT_INACTIVE` on any attempt to do so. To re-activate it, send a `PATCH` request:
+
+    ```bash
+    curl -X PATCH https://api.maislinda.com/v1/agents/{id} \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{ "status": "active" }'
+    ```
+
+    Once the agent returns `"status": "active"` in the response, you can resume sending messages to it.
+  </Accordion>
+</AccordionGroup>

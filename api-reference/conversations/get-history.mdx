@@ -1,0 +1,94 @@
+---
+title: "Get Conversation History — GET /conversations/{threadId}"
+sidebarTitle: "Get History"
+description: "Retrieve the complete message history of a conversation thread, including all user and agent messages, timestamps, and pagination metadata."
+---
+
+Use this endpoint to retrieve the complete message history of a conversation thread. This is useful for displaying chat history in your UI, auditing conversations, or syncing with external systems.
+
+## Endpoint
+
+```
+GET /v1/agents/{agentId}/conversations/{threadId}
+```
+
+## Path Parameters
+
+| Parameter  | Type   | Required | Description                |
+| ---------- | ------ | -------- | -------------------------- |
+| `agentId`  | string | Yes      | The ID of the agent        |
+| `threadId` | string | Yes      | The ID of the thread to retrieve |
+
+## Query Parameters
+
+| Parameter  | Type    | Required | Description                                      |
+| ---------- | ------- | -------- | ------------------------------------------------ |
+| `page`     | integer | No       | Page number. Defaults to `1`.                    |
+| `per_page` | integer | No       | Number of messages per page. Default `20`, max `100`. |
+
+## Example
+
+```bash
+curl https://api.maislinda.com/v1/agents/agent_01j8x.../conversations/thread_abc123 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```json
+{
+  "thread_id": "thread_abc123",
+  "agent_id": "agent_01j8x...",
+  "status": "open",
+  "created_at": "2024-01-15T10:30:00Z",
+  "messages": [
+    {
+      "id": "msg_001",
+      "role": "user",
+      "content": "What is your return policy?",
+      "created_at": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": "msg_002",
+      "role": "assistant",
+      "content": "Our return policy allows returns within 30 days...",
+      "created_at": "2024-01-15T10:30:01Z"
+    }
+  ],
+  "meta": {
+    "total": 2,
+    "page": 1,
+    "per_page": 20,
+    "total_pages": 1
+  }
+}
+```
+
+## Response Fields
+
+### Top-Level Fields
+
+| Field        | Type   | Description                                              |
+| ------------ | ------ | -------------------------------------------------------- |
+| `thread_id`  | string | The ID of the conversation thread                        |
+| `agent_id`   | string | The agent associated with this thread                    |
+| `status`     | string | Thread status — `open` or `closed`                      |
+| `created_at` | string | ISO 8601 timestamp of when the thread was created        |
+| `messages`   | array  | Ordered list of messages in the conversation             |
+| `meta`       | object | Pagination metadata                                      |
+
+### Message Object
+
+| Field        | Type   | Description                                              |
+| ------------ | ------ | -------------------------------------------------------- |
+| `id`         | string | Unique message ID                                        |
+| `role`       | string | Message sender — `user` or `assistant`                  |
+| `content`    | string | The message text                                         |
+| `created_at` | string | ISO 8601 timestamp of when the message was sent          |
+
+### Pagination (`meta`)
+
+| Field         | Type    | Description                         |
+| ------------- | ------- | ----------------------------------- |
+| `total`       | integer | Total number of messages in thread  |
+| `page`        | integer | Current page number                 |
+| `per_page`    | integer | Messages returned per page          |
+| `total_pages` | integer | Total number of pages               |

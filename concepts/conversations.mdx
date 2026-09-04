@@ -1,0 +1,100 @@
+---
+title: "Conversation Threads: Context-Aware Messaging in Mais Linda"
+sidebarTitle: "Conversations"
+description: "Conversations in Mais Linda are organized as threads. Each thread maintains context across multiple messages so your agent remembers the discussion."
+---
+
+Mais Linda organizes messages into conversation threads. A thread is a persistent session between a user and an agent that preserves the full message history, allowing the agent to maintain context across multiple turns.
+
+## Threads
+
+Every conversation lives inside a thread. Here's how threading works:
+
+- Every time you call `/chat` **without** a `thread_id`, Mais Linda automatically creates a new thread for that conversation.
+- The API response includes a `thread_id` — store this value and pass it in all subsequent calls to keep the conversation in the same context window.
+- Threads persist until you explicitly close them or they expire due to inactivity.
+
+The flow looks like this:
+
+| Step | What you send | What happens |
+|------|--------------|--------------|
+| First message | Message only (no `thread_id`) | New thread created; `thread_id` returned in response |
+| Second message | Message + `thread_id` | Agent has access to full prior history; responds in context |
+| Third message | Message + same `thread_id` | Conversation continues; full history preserved |
+
+## Starting a Conversation
+
+To start a new conversation, send a message to the `/chat` endpoint for your agent without a `thread_id`. Mais Linda will create a new thread and return its ID in the response.
+
+```bash
+curl -X POST https://api.maislinda.com/v1/agents/agent_01j8x.../chat \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Hi, what is your return policy?"
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "thread_id": "thread_04kz9...",
+  "message": "Hi! We offer a 30-day return policy on all items. Would you like more details on how to start a return?"
+}
+```
+
+Save the `thread_id` from this response — you'll need it for every follow-up message in this conversation.
+
+## Continuing a Conversation
+
+To continue an existing conversation, include the `thread_id` from the previous response. The agent will have access to everything said earlier in the thread.
+
+```bash
+curl -X POST https://api.maislinda.com/v1/agents/agent_01j8x.../chat \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "thread_id": "thread_04kz9...",
+    "message": "Great — I bought something 2 weeks ago. Can I still return it?"
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "thread_id": "thread_04kz9...",
+  "message": "Yes, since your purchase was 2 weeks ago, you're well within our 30-day return window. Would you like me to walk you through the steps?"
+}
+```
+
+Notice that the agent referenced the return policy from earlier in the thread — it didn't need to be told again. That's context preservation in action.
+
+## Closing a Conversation
+
+When a conversation is complete, you should close the thread. Closing a thread signals that the session has ended, allowing Mais Linda to free the associated resources.
+
+```bash
+curl -X POST https://api.maislinda.com/v1/agents/{agentId}/conversations/{thread_id}/close \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+**Response:**
+
+```json
+{
+  "thread_id": "thread_04kz9...",
+  "status": "closed"
+}
+```
+
+<Warning>
+Closed threads cannot receive new messages. If a user wants to start a new conversation after a thread is closed, create a fresh thread by calling `/chat` without a `thread_id`.
+</Warning>
+
+## Thread Expiry
+
+Threads that receive no new messages for **24 hours** are automatically expired. Once a thread expires, its `thread_id` becomes invalid — any request using an expired `thread_id` will return a `404 Not Found` error.
+
+To resume a conversation after expiry, start a new thread. If your use case requires longer session lifetimes, contact [Mais Linda support](mailto:support@maislinda.com) to discuss extended expiry options.

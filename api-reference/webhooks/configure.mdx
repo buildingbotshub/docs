@@ -1,0 +1,60 @@
+---
+title: "Configure a Webhook Endpoint — POST /v1/webhooks"
+sidebarTitle: "Configure Webhooks"
+description: "Register an HTTPS endpoint to receive real-time Mais Linda event notifications. Specify which event types to subscribe to and an optional signing secret."
+---
+
+Register a webhook to have Mais Linda send HTTP POST requests to your server when specific events occur. Each webhook can subscribe to one or more event types and optionally use a signing secret for request verification.
+
+## Endpoint
+
+```
+POST /v1/webhooks
+```
+
+## Request Body
+
+| Field         | Type   | Required | Description                                                                                          |
+| ------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------- |
+| `url`         | string | Yes      | HTTPS URL to receive webhook payloads                                                                |
+| `events`      | array  | Yes      | One or more event types to subscribe to. See the [Events Reference](/api-reference/webhooks/events) |
+| `secret`      | string | No       | Signing secret for HMAC-SHA256 request verification. Strongly recommended for production use         |
+| `description` | string | No       | A human-readable label to identify this webhook                                                      |
+
+## Example
+
+```bash
+curl -X POST https://api.maislinda.com/v1/webhooks \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://your-app.com/webhooks/maislinda",
+    "events": ["message.received", "conversation.started"],
+    "secret": "whsec_your_secret",
+    "description": "Production webhook"
+  }'
+```
+
+```json
+{
+  "id": "wh_abc123",
+  "url": "https://your-app.com/webhooks/maislinda",
+  "events": ["message.received", "conversation.started"],
+  "description": "Production webhook",
+  "created_at": "2024-01-15T10:30:00Z"
+}
+```
+
+## Response Fields
+
+| Field        | Type   | Description                                              |
+| ------------ | ------ | -------------------------------------------------------- |
+| `id`         | string | Unique webhook ID                                        |
+| `url`        | string | The destination URL for event payloads                   |
+| `events`     | array  | The list of event types this webhook is subscribed to    |
+| `description`| string | The human-readable label provided at creation            |
+| `created_at` | string | ISO 8601 timestamp of when the webhook was registered    |
+
+<Tip>
+  Always verify webhook signatures in production to confirm that requests are genuinely from Mais Linda. See the [Webhooks Guide](/guides/webhooks) for a step-by-step code example using HMAC-SHA256 verification.
+</Tip>

@@ -1,0 +1,122 @@
+---
+title: "Send Real-Time Webhook Events from Mais Linda Agents"
+sidebarTitle: "Webhooks"
+description: "Configure webhooks to receive instant notifications for conversations, messages, and thread closures — and build reliable delivery with retries."
+---
+
+Webhooks let Mais Linda push real-time notifications to your server whenever something happens — a new conversation starts, a user sends a message, or a thread closes. Use webhooks to sync data with your CRM, trigger automation, or log conversations.
+
+## How Webhooks Work
+
+The flow for every webhook event is straightforward:
+
+1. An event occurs in Mais Linda (e.g., a user sends a message).
+2. Mais Linda sends an HTTP `POST` request to your registered endpoint URL with a JSON payload describing the event.
+3. Your server processes the payload and returns an HTTP `2xx` status code to acknowledge receipt.
+
+<Note>
+Your endpoint must respond within **5 seconds**. If Mais Linda does not receive a `2xx` response in time — or receives any non-`2xx` response — it will treat the delivery as failed and retry automatically. See [Retries](#retries) below for details.
+</Note>
+
+## Registering a Webhook
+
+Register an endpoint by calling `POST /v1/webhooks` with your URL, the events you want to subscribe to, and an optional signing secret (strongly recommended — see [Verifying Webhook Signatures](#verifying-webhook-signatures)).
+
+```bash
+curl -X POST https://api.maislinda.com/v1/webhooks \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://your-app.com/webhooks/maislinda",
+    "events": ["message.received", "conversation.started", "conversation.closed"],
+    "secret": "your-webhook-signing-secret"
+  }'
+```
+
+A successful response returns the registered webhook object:
+
+```json
+{
+  "id": "wh_01j9abc123def456",
+  "url": "https://your-app.com/webhooks/maislinda",
+  "events": ["message.received", "conversation.started", "conversation.closed"],
+  "status": "active",
+  "created_at": "2024-01-15T10:00:00Z"
+}
+```
+
+## Available Events
+
+Subscribe to any combination of the following events when registering your webhook.
+
+| Event | Description |
+|---|---|
+| `message.received` | A user sent a message to your agent. |
+| `message.sent` | Your agent replied to a user. |
+| `conversation.started` | A new conversation thread was created. |
+| `conversation.closed` | A thread was closed (by the user, agent, or inactivity timeout). |
+
+## Webhook Payload
+
+Every webhook `POST` contains a JSON body with a consistent envelope: the event name, a UTC timestamp, and a `data` object with event-specific fields.
+
+The following is an example payload for the `message.received` event:
+
+```json
+{
+  "event": "message.received",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": {
+    "thread_id": "thread_abc123",
+    "agent_id": "agent_01j8x...",
+    "message": "What are your business hours?",
+    "user_id": "user_xyz"
+  }
+}
+```
+
+The `data` fields vary by event type, but `thread_id` and `agent_id` are present on all events so you can always correlate payloads with a specific conversation and agent.
+
+## Verifying Webhook Signatures
+
+Mais Linda signs every webhook request using **HMAC-SHA256** with the `secret` you provided during registration. The signature is sent in the `x-maislinda-signature` request header as `sha256=<hex-digest>`.
+
+Always verify this signature before processing a payload to confirm the request genuinely came from Mais Linda and has not been tampered with.
+
+```javascript
+const crypto = require('crypto');
+
+function verifyWebhook(payload, signature, secret) {
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+  return `sha256=${expected}` === signature;
+}
+
+// In your route handler:
+const signature = req.headers['x-maislinda-signature'];
+const isValid = verifyWebhook(req.rawBody, signature, process.env.WEBHOOK_SECRET);
+
+if (!isValid) {
+  return res.status(401).send('Invalid signature');
+}
+
+// Safe to process the payload
+```
+
+Use `req.rawBody` (the raw request buffer) rather than a parsed JSON object — any whitespace difference will cause signature verification to fail.
+
+## Retries
+
+If your endpoint returns a non-`2xx` response or times out, Mais Linda will retry the delivery up to **3 times** using exponential backoff:
+
+| Attempt | Delay after previous failure |
+|---|---|
+| Retry 1 | 1 minute |
+| Retry 2 | 5 minutes |
+| Retry 3 | 30 minutes |
+
+After three failed retries, the delivery is marked as permanently failed and no further attempts are made. You can view delivery logs and manually replay failed events from the **Webhooks** section of your dashboard.
+
+To avoid retries, make your endpoint respond with `200 OK` as soon as you've received the payload and process it asynchronously using a background job or queue.

@@ -1,0 +1,90 @@
+---
+title: "Embed the Mais Linda Chat Widget on Your Website Now"
+sidebarTitle: "Embed Widget"
+description: "Add a fully functional AI chat widget to any webpage in minutes using a JavaScript snippet. No server-side code required for basic widget deployment."
+---
+
+The Mais Linda chat widget lets you add AI-powered chat to any webpage with a few lines of JavaScript. The widget handles the entire chat UI — including message history, typing indicators, and mobile responsiveness — so you can focus on configuring your agent.
+
+## Prerequisites
+
+Before embedding the widget, you'll need:
+
+- **An active Mais Linda agent.** If you haven't created one yet, follow the [Create an Agent](/guides/create-agent) guide first.
+- **Your agent's embed code.** This is a short public token, separate from your API key, available on the agent's detail page in the dashboard.
+
+## Add the Widget Script
+
+Paste the following snippet into your webpage's HTML. Replace `YOUR_AGENT_EMBED_CODE` with the embed code from your dashboard.
+
+```html
+<script src="https://cdn.maislinda.com/widget.js"></script>
+<div id="maislinda-widget"
+     data-agent-code="YOUR_AGENT_EMBED_CODE"
+     data-agent-name="Support Bot">
+</div>
+```
+
+**Placement:** Add this snippet just before the closing `</body>` tag for best performance, or inside any container `<div>` where you want the widget to appear. The widget renders as a floating chat button in the corner of the page by default.
+
+## Get Your Embed Code
+
+Your embed code is unique to each agent. To find it in the dashboard:
+
+1. Open the **Agents** list and select your agent.
+2. Click the **Integration** tab on the agent detail page.
+3. Click **Copy Embed Code** to copy the token to your clipboard.
+
+Paste the copied value as the `data-agent-code` attribute in the snippet above.
+
+## Widget Configuration Options
+
+Customize the widget's appearance and behavior using `data-*` attributes on the container `<div>`.
+
+| Attribute | Required | Description |
+|---|---|---|
+| `data-agent-code` | ✅ Required | Your agent's public embed code, obtained from the dashboard. |
+| `data-agent-name` | Optional | Display name shown in the widget header. Defaults to your agent's configured name. |
+| `data-primary-color` | Optional | Hex color code for the widget button and header (e.g., `#ef7025`). Defaults to Mais Linda brand blue. |
+| `data-position` | Optional | Position of the floating button. Accepts `bottom-right` (default) or `bottom-left`. |
+| `data-greeting` | Optional | A message shown to the user when the widget is first opened (e.g., `"Hi! How can I help you today?"`). |
+
+**Example with all options:**
+
+```html
+<script src="https://cdn.maislinda.com/widget.js"></script>
+<div id="maislinda-widget"
+     data-agent-code="YOUR_AGENT_EMBED_CODE"
+     data-agent-name="Acme Support"
+     data-primary-color="#ef7025"
+     data-position="bottom-right"
+     data-greeting="Hi! How can I help you today?">
+</div>
+```
+
+## Get the Embed Code via API
+
+If you're building a platform that programmatically generates pages with embedded widgets, you can retrieve widget configuration directly from the API.
+
+```bash
+curl https://api.maislinda.com/v1/agents/{agentId}/widget-config \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+The response includes the embed code and a ready-to-use HTML snippet:
+
+```json
+{
+  "agent_id": "agent_01j8xkq2m3n4p5r6s7t8u9v0",
+  "embed_code": "wgt_a1b2c3d4e5f6g7h8",
+  "widget_html": "<script src=\"https://cdn.maislinda.com/widget.js\"></script><div id=\"maislinda-widget\" data-agent-code=\"wgt_a1b2c3d4e5f6g7h8\"></div>"
+}
+```
+
+You can use the `widget_html` value directly in server-rendered pages, or extract the `embed_code` for dynamic injection.
+
+<Warning>
+The widget uses a **public embed code**, not your API key. The embed code is safe to include in client-side HTML and is scoped only to widget functionality for that specific agent.
+
+**Never put your API key in client-side code.** Your API key grants full access to your account and must only be used in server-side requests.
+</Warning>

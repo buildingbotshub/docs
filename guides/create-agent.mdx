@@ -1,0 +1,120 @@
+---
+title: "Create and Configure Your First Mais Linda AI Agent"
+sidebarTitle: "Create an Agent"
+description: "Build a fully configured AI agent from scratch — set instructions, add knowledge, and activate it for production use with the Mais Linda API."
+---
+
+This guide walks you through creating an AI agent using the Mais Linda API, configuring its behavior with instructions and knowledge, and making it ready to handle real conversations.
+
+## Create the Agent
+
+Start by calling the `/agents` endpoint with a name and a set of instructions. The `instructions` field is the most important input — it defines your agent's persona, scope, and tone.
+
+```bash
+curl -X POST https://api.maislinda.com/v1/agents \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Customer Support",
+    "instructions": "You are a helpful customer support agent for Acme Corp. Answer questions about products, orders, and policies. Be concise and friendly."
+  }'
+```
+
+A successful response returns the new agent object, including its unique `id` — you'll use this in every subsequent request.
+
+```json
+{
+  "id": "agent_01j8xkq2m3n4p5r6s7t8u9v0",
+  "name": "Customer Support",
+  "instructions": "You are a helpful customer support agent for Acme Corp. Answer questions about products, orders, and policies. Be concise and friendly.",
+  "status": "inactive",
+  "created_at": "2024-01-15T10:00:00Z"
+}
+```
+
+## Add a Knowledge Base
+
+Give your agent accurate, up-to-date facts by uploading documents to its knowledge base. The agent will retrieve relevant content from these documents when answering user questions. You can add as many documents as needed.
+
+```bash
+curl -X POST https://api.maislinda.com/v1/agents/{agentId}/knowledge \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Shipping Policy",
+    "content": "Standard shipping takes 5-7 business days. Express shipping (2-3 days) is available for an additional fee."
+  }'
+```
+
+A successful response confirms the document was ingested:
+
+```json
+{
+  "id": "doc_09zyw8xv7u6t5s4r3q2p1o0n",
+  "agent_id": "agent_01j8xkq2m3n4p5r6s7t8u9v0",
+  "title": "Shipping Policy",
+  "status": "indexed",
+  "created_at": "2024-01-15T10:05:00Z"
+}
+```
+
+Repeat this step for each document — FAQs, return policies, product descriptions, and anything else your agent should know.
+
+## Update Agent Settings
+
+Use `PATCH /v1/agents/{agentId}` to update the agent's name, instructions, or status at any time. Changes take effect immediately on the next conversation turn.
+
+```bash
+curl -X PATCH https://api.maislinda.com/v1/agents/{agentId} \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "instructions": "Updated instructions here...",
+    "status": "active"
+  }'
+```
+
+Setting `status` to `"active"` makes the agent available for live conversations. Setting it to `"inactive"` suspends it without deleting any data.
+
+```json
+{
+  "id": "agent_01j8xkq2m3n4p5r6s7t8u9v0",
+  "name": "Customer Support",
+  "status": "active",
+  "updated_at": "2024-01-15T10:15:00Z"
+}
+```
+
+## Test Your Agent
+
+Before going live, verify that the agent responds correctly to realistic queries. Use the `POST /v1/agents/{agentId}/chat` endpoint to send a message directly and inspect the response.
+
+```bash
+curl -X POST https://api.maislinda.com/v1/agents/{agentId}/chat \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "message": "What is your return policy?" }'
+```
+
+The response includes the agent's reply and a `thread_id` you can use to continue the conversation:
+
+```json
+{
+  "thread_id": "thread_abc123",
+  "reply": "Our return policy allows you to return most items within 30 days of purchase. Please contact support for assistance with your return.",
+  "agent_id": "agent_01j8xkq2m3n4p5r6s7t8u9v0"
+}
+```
+
+Try a range of questions — edge cases, ambiguous phrasing, and topics outside the agent's scope — to confirm it handles them gracefully.
+
+## Production Checklist
+
+<Note>
+Before directing real users to your agent, confirm all of the following:
+
+- ✅ The agent has clear, specific instructions that define its persona and scope
+- ✅ The knowledge base is populated with current, accurate content
+- ✅ The agent's `status` is set to `active`
+- ✅ The agent has been tested with a representative set of user queries
+</Note>

@@ -1,0 +1,166 @@
+---
+title: "Webhook Events Reference for the Mais Linda Agent API"
+sidebarTitle: "Webhook Events"
+description: "Reference for all Mais Linda webhook event types, including full payload schemas for message and conversation events, retry behavior, and deduplication."
+---
+
+Mais Linda sends webhook events for all significant activity on your account. Each event is delivered as a JSON POST request to your registered webhook URL. This page documents every available event type and its payload structure.
+
+## Event Envelope
+
+All events share the same outer structure, regardless of event type:
+
+```json
+{
+  "id": "evt_01j8x...",
+  "event": "message.received",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": { ... }
+}
+```
+
+| Field       | Type   | Description                                                                 |
+| ----------- | ------ | --------------------------------------------------------------------------- |
+| `id`        | string | A unique identifier for this event delivery. Use this for deduplication.    |
+| `event`     | string | The event type string, e.g. `message.received`                              |
+| `timestamp` | string | ISO 8601 timestamp of when the event occurred                               |
+| `data`      | object | Event-specific payload. Schema varies by event type — see below             |
+
+---
+
+## Event Types
+
+### `message.received`
+
+Fired when a user sends a message to your agent.
+
+```json
+{
+  "id": "evt_001",
+  "event": "message.received",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": {
+    "message_id": "msg_xyz",
+    "thread_id": "thread_abc123",
+    "agent_id": "agent_01j8x...",
+    "message": "What are your hours?",
+    "user_id": "user_123"
+  }
+}
+```
+
+| Field        | Type   | Description                                  |
+| ------------ | ------ | -------------------------------------------- |
+| `message_id` | string | Unique ID of the incoming message            |
+| `thread_id`  | string | The conversation thread the message belongs to |
+| `agent_id`   | string | The agent that received the message          |
+| `message`    | string | The user's message text                      |
+| `user_id`    | string | Your identifier for the user, if provided    |
+
+---
+
+### `message.sent`
+
+Fired when the agent sends a reply to a user.
+
+```json
+{
+  "id": "evt_002",
+  "event": "message.sent",
+  "timestamp": "2024-01-15T10:30:01Z",
+  "data": {
+    "message_id": "msg_xyz2",
+    "thread_id": "thread_abc123",
+    "agent_id": "agent_01j8x...",
+    "response": "We're open Monday–Friday, 9am–6pm."
+  }
+}
+```
+
+| Field        | Type   | Description                                      |
+| ------------ | ------ | ------------------------------------------------ |
+| `message_id` | string | Unique ID of the outgoing message                |
+| `thread_id`  | string | The conversation thread the reply belongs to     |
+| `agent_id`   | string | The agent that sent the reply                    |
+| `response`   | string | The agent's reply text                           |
+
+---
+
+### `conversation.started`
+
+Fired when a new conversation thread is created.
+
+```json
+{
+  "id": "evt_003",
+  "event": "conversation.started",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": {
+    "thread_id": "thread_abc123",
+    "agent_id": "agent_01j8x...",
+    "user_id": "user_123"
+  }
+}
+```
+
+| Field       | Type   | Description                                         |
+| ----------- | ------ | --------------------------------------------------- |
+| `thread_id` | string | The ID of the newly created thread                  |
+| `agent_id`  | string | The agent the conversation was started with         |
+| `user_id`   | string | Your identifier for the user, if provided           |
+
+---
+
+### `conversation.closed`
+
+Fired when a conversation thread is closed — either manually via the API or automatically after 24 hours of inactivity.
+
+```json
+{
+  "id": "evt_004",
+  "event": "conversation.closed",
+  "timestamp": "2024-01-15T11:00:00Z",
+  "data": {
+    "thread_id": "thread_abc123",
+    "agent_id": "agent_01j8x...",
+    "closed_reason": "manual"
+  }
+}
+```
+
+| Field           | Type   | Description                                                     |
+| --------------- | ------ | --------------------------------------------------------------- |
+| `thread_id`     | string | The ID of the closed thread                                     |
+| `agent_id`      | string | The agent associated with the thread                            |
+| `closed_reason` | string | Why the thread was closed. See values below.                    |
+
+**`closed_reason` values:**
+
+| Value     | Description                                            |
+| --------- | ------------------------------------------------------ |
+| `manual`  | Closed explicitly via the [Close Conversation](/api-reference/conversations/close) API endpoint |
+| `expired` | Closed automatically after 24 hours of inactivity     |
+
+---
+
+## Retry Behavior
+
+If your endpoint does not respond with a `2xx` status code within **10 seconds**, Mais Linda will retry delivery up to **3 times** using exponential backoff:
+
+| Attempt | Delay after failure |
+| ------- | ------------------- |
+| 1st     | 1 minute            |
+| 2nd     | 5 minutes           |
+| 3rd     | 30 minutes          |
+
+If all retries are exhausted, the event is marked as failed. You can manually **replay** any failed event from the Mais Linda dashboard.
+
+---
+
+## Deduplication
+
+Each event carries a unique `id` field (e.g. `evt_01j8x...`). Under rare circumstances — such as a network timeout followed by a retry — your endpoint may receive the same event more than once.
+
+<Note>
+  To handle duplicate deliveries safely, store the `id` of every processed event and skip processing if you've already seen that ID. This makes your webhook handler idempotent.
+</Note>
